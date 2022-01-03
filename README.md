@@ -88,6 +88,10 @@ This module exposes a single function `download` which takes the same arguments 
   * **keep_ratio** will keep the ratio and make the smallest side of the picture image_size
   * **center_crop** will keep the ratio and center crop the largest side so the picture is squared
 * **resize_only_if_bigger** resize pictures only if bigger that the image_size (default *False*)
+* **upscale_interpolation** kind of upscale interpolation used for resizing (default *"lanczos"*)
+* **downscale_interpolation** kind of downscale interpolation used for resizing (default *"area"*)
+* **encode_quality** encode quality (default *95*)
+* **skip_reencode** whether to skip reencoding if no resizing is done (default *False*)
 * **output_format** decides how to save pictures (default *files*)
   * **files** saves as a set of subfolder containing pictures
   * **webdataset** saves as tars containing pictures
@@ -167,6 +171,8 @@ With these information in mind, the design choice was done in this way:
   * the parent thread saves to a tar file that is different from other process
 
 This design make it possible to use the CPU resource efficiently by doing only 1 resize per core, reduce disk overhead by opening 1 file per core, while using the bandwidth resource as much as possible by using M thread per process.
+
+Also see [architecture.md](img2dataset/architecture.md) for the precise split in python modules.
 
 ## Setting up a bind9 resolver
 
