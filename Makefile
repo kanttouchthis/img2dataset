@@ -13,12 +13,14 @@ lint: ## [Local development] Run mypy, pylint and black
 black: ## [Local development] Auto-format python code using black
 	python -m black -l 120 .
 
-venv-lint-test: ## [Continuous integration]
-	python3 -m venv .env && . .env/bin/activate && make install install-dev lint test && rm -rf .env
+build-pex:
+	python3 -m venv .pexing
+	. .pexing/bin/activate && python -m pip install -U pip && python -m pip install pex
+	. .pexing/bin/activate && python -m pex setuptools gcsfs==2022.1.0 s3fs==2022.1.0 pyspark==3.2.0 . -o img2dataset.pex -v
+	rm -rf .pexing
 
 test: ## [Local development] Run unit tests
-	rm -rf tests/test_folder/
-	python -m pytest -x -v --cov=img2dataset --cov-report term-missing --cov-fail-under 80 tests
+	python -m pytest -x -s -v tests
 
 .PHONY: help
 

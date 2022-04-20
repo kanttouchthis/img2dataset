@@ -1,3 +1,152 @@
+## 1.28.0
+
+* use pyarrow in the reader to make it much faster
+
+## 1.27.4
+
+* use 2022.1.0 of fsspec for python3.6
+
+## 1.27.3
+
+* fix fsspec version
+
+## 1.27.2
+
+* fix fsspec version
+
+## 1.27.1
+
+* add gcsfs to pex
+
+## 1.27.0
+
+* buffered writer fix: release ram more often
+* feat: accept numpy arrays (thanks @borisdayma)
+
+## 1.26.0
+
+* add tfrecord output format (thanks @borisdayma)
+
+## 1.25.6
+
+* fix an interaction between md5 and exif option
+
+## 1.25.5
+
+* fix dependency ranges
+
+## 1.25.4
+
+* use exifread-nocycle to avoid cycle in exifread
+
+## 1.25.3
+
+* retry whole sharding if it fails
+
+## 1.25.2
+
+* retry writing the shard in reader in case of error
+
+## 1.25.1
+
+* small fix for logger and continuing
+* use time instead of perf_counter to measure shard duration
+
+## 1.25.0
+
+* make metadata writer much faster by building the schema in the downloader instead of guessing it
+* add new option allowing to disable reencoding
+
+## 1.24.1
+
+* hide opencv warning
+
+## 1.24.0
+
+* force one thread for opencv
+* make total logger start time the minimum of workers start time
+* add s3fs into the released pex for convenience
+* make sharding faster on high latency fs by using a thread pool
+
+## 1.23.1
+
+* fix logger on s3: do not use listing caching in logger
+
+## 1.23.0
+
+* add tutorial on how to setup a spark cluster and use it for distributed img2dataset
+better aws s3 support:
+* initialize logger fs in subprocess to avoid moving fs over a fork()
+* use spawn instead of fork method
+
+* make total logging more intuitive and convenient by logging every worker return
+
+## 1.22.3
+
+* fix release regex
+
+## 1.22.2
+
+* fix fsspec support by using tmp_dir in main.py
+
+## 1.22.1
+
+* fix pex creation
+
+## 1.22.0
+
+* add option not to write
+
+## 1.21.2
+
+* try catch in the logger for json.load
+* prevent error if logger sync is called when no call has been done
+* Add a build-pex target in Makefile and CI
+
+## 1.21.1
+
+* decrease default log interval to 5s
+
+## 1.21.0
+
+* add option to retry http download
+
+## 1.20.2
+
+* add original_width by default for a consistent schema
+
+## 1.20.1
+
+* fix relative path handling
+
+## 1.20.0
+
+* Add multi distributor support : multiprocessing and pyspark
+
+## 1.19.0
+
+* make the reader emits file paths instead of samples
+
+## 1.18.0
+
+* use a logger process to make logging distribution friendly, also save json stat files next to folder/tar files
+
+## 1.17.0
+
+* Use fsspec to support all filesystems
+
+## 1.16.0
+
+* implement md5 of images feature
+
+## 1.15.1
+
+* fix null convert in writer
+
+## 1.15.0
+
+* add parquet writer
+
 ## 1.14.0
 
 * make reader memory efficient by using feather files
