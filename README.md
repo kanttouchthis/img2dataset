@@ -21,6 +21,9 @@ Example of datasets to download with example commands are available in the [data
 * [cc12m](dataset_examples/cc12m.md) 12M image/text pairs that can be downloaded in five hour
 * [laion400m](dataset_examples/laion400m.md) 400M image/text pairs that can be downloaded in 3.5 days
 * [laion5B](dataset_examples/laion5B.md) 5B image/text pairs that can be downloaded in 7 days using 10 nodes
+* [laion-aesthetic](dataset_examples/laion-aesthetic.md) Laion aesthetic is a 120M laion5B subset with aesthetic > 7 pwatermark < 0.8 punsafe < 0.5
+* [laion-art](dataset_examples/laion-art.md) Laion aesthetic is a 8M laion5B subset with aesthetic > 8 pwatermark < 0.8 punsafe < 0.5
+* [laion-high-resolution](dataset_examples/laion-high-resolution.md) Laion high resolution is a 170M resolution >= 1024x1024 subset of laion5B
 
 For all these examples, you may want to tweak the resizing to your preferences. The default is 256x256 with white borders.
 See options below.
@@ -90,7 +93,7 @@ This module exposes a single function `download` which takes the same arguments 
 
 * **url_list** A file with the list of url of images to download. It can be a folder of such files. (*required*)
 * **image_size** The size to resize image to (default *256*)
-* **output_folder** The path to the output folder. If existing subfolder are present, the tool will continue to the next number. (default *"images"*)
+* **output_folder** The path to the output folder. (default *"images"*)
 * **processes_count** The number of processes used for downloading the pictures. This is important to be high for performance. (default *1*)
 * **thread_count** The number of threads used for downloading the pictures. This is important to be high for performance. (default *256*)
 * **resize_mode** The way to resize pictures, can be no, border or keep_ratio (default *border*)
@@ -132,6 +135,12 @@ This module exposes a single function `download` which takes the same arguments 
 * **subjob_size** the number of shards to download in each subjob supporting it, a subjob can be a pyspark job for example (default *1000*)
 * **retries** number of time a download should be retried (default *0*)
 * **disable_all_reencoding** if set to True, this will keep the image files in their original state with no resizing and no conversion, will not even check if the image is valid. Useful for benchmarks. To use only if you plan to post process the images by another program and you have plenty of storage available. (default *False*)
+* **incremental_mode** Can be "incremental" or "overwrite". For "incremental", img2dataset will download all the shards that were not downloaded, for "overwrite" img2dataset will delete recursively the output folder then start from zero (default *incremental*)
+* **max_shard_retry** Number of time to retry failed shards at the end (default *1*)
+
+## Incremental mode
+
+If a first download got interrupted for any reason, you can run again with --incremental "incremental" (this is the default) and using the same output folder , the same number_sample_per_shard and the same input urls, and img2dataset will complete the download.
 
 ## Output format choice
 
@@ -264,14 +273,15 @@ To get the best performances with img2dataset, using an efficient dns resolver i
 
 Follow [the official quick start](https://knot-resolver.readthedocs.io/en/stable/quickstart-install.html) or run this on ubuntu:
 
-first stop systemd-resolved with `sudo systemctl stop systemd-resolved`
-
-then install knot with
+install knot with
 ```
 wget https://secure.nic.cz/files/knot-resolver/knot-resolver-release.deb
 sudo dpkg -i knot-resolver-release.deb
 sudo apt update
 sudo apt install -y knot-resolver
+sudo sh -c 'echo `hostname -I` `hostname` >> /etc/hosts'
+sudo sh -c 'echo nameserver 127.0.0.1 > /etc/resolv.conf'
+udo systemctl stop systemd-resolved
 ```
 
 then start 4 instances with
@@ -282,7 +292,10 @@ sudo systemctl start kresd@3.service
 sudo systemctl start kresd@4.service
 ```
 
-You may have to change /etc/resolv.conf to point to 127.0.0.1
+Check it works with
+```
+dig @localhost google.com
+```
 
 ### Setting up a bind9 resolver
 

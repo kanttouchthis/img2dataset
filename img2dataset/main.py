@@ -51,6 +51,8 @@ def download(
     subjob_size: int = 1000,
     retries: int = 0,
     disable_all_reencoding: bool = False,
+    incremental_mode: str = "incremental",
+    max_shard_retry: int = 1,
 ):
     """Download is the main entry point of img2dataset, it uses multiple processes and download multiple files"""
     config_parameters = dict(locals())
@@ -87,17 +89,18 @@ def download(
 
     if not fs.exists(output_path):
         fs.mkdir(output_path)
-        start_shard_id = 0
+        done_shards = set()
     else:
-        existing_top_level_files = [x for x in fs.glob(output_path + "/*") if x != tmp_dir and "stats" not in x]
-        if len(existing_top_level_files) == 0:
-            start_shard_id = 0
+        if incremental_mode == "incremental":
+            done_shards = set(int(x.split("/")[-1].split("_")[0]) for x in fs.glob(output_path + "/*.json"))
+        elif incremental_mode == "overwrite":
+            fs.rm(output_path, recursive=True)
+            fs.mkdir(output_path)
+            done_shards = set()
         else:
-            start_shard_id = (
-                max([int(x.split("/")[-1].split(".")[0]) for x in existing_top_level_files if x != tmp_dir]) + 1
-            )
+            raise ValueError(f"Unknown incremental mode {incremental_mode}")
 
-    logger_process.start_shard_id = start_shard_id
+    logger_process.done_shards = done_shards
     logger_process.start()
 
     reader = Reader(
@@ -107,7 +110,7 @@ def download(
         caption_col,
         save_additional_columns,
         number_sample_per_shard,
-        start_shard_id,
+        done_shards,
         tmp_path,
     )
 
@@ -121,6 +124,8 @@ def download(
         sample_writer_class = TFRecordSampleWriter  # type: ignore
     elif output_format == "dummy":
         sample_writer_class = DummySampleWriter  # type: ignore
+    else:
+        raise ValueError(f"Invalid output format {output_format}")
 
     resizer = Resizer(
         image_size=image_size,
@@ -161,6 +166,7 @@ def download(
         downloader,
         reader,
         subjob_size,
+        max_shard_retry,
     )
     logger_process.join()
     fs.rm(tmp_dir, recursive=True)
