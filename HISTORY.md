@@ -1,3 +1,19 @@
+## 1.33.0
+
+* feat: support pyspark < 3 when distributing image-to-dataset job
+
+## 1.32.0
+
+* feat: support min image size + max aspect ratio (@borisdayma)
+
+## 1.31.0
+
+* feat: allow encoding in different formats (thanks @borisdayma)
+
+## 1.30.2
+
+* Fix error message for incorrect input format 
+
 ## 1.30.1
 
 * Bug fix: shard id was incorrect when resuming (thanks @lxj616)

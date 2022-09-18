@@ -20,14 +20,28 @@ testdata = [
     ("no", False, True),
 ]
 
+testformat = [
+    (95, "jpg"),
+    (95, "webp"),
+    (9, "png"),
+]
+
 
 @pytest.mark.parametrize("image_size", [256, 512])
 @pytest.mark.parametrize("resize_mode, resize_only_if_bigger, skip_reencode", testdata)
-def test_resizer(image_size, resize_mode, resize_only_if_bigger, skip_reencode):
+@pytest.mark.parametrize("encode_quality, encode_format", testformat)
+def test_resizer(image_size, resize_mode, resize_only_if_bigger, skip_reencode, encode_quality, encode_format):
     current_folder = os.path.dirname(__file__)
     test_folder = current_folder + "/" + "resize_test_image"
     image_paths = glob.glob(test_folder + "/*")
-    resizer = Resizer(image_size, resize_mode, resize_only_if_bigger, skip_reencode=skip_reencode)
+    resizer = Resizer(
+        image_size,
+        resize_mode,
+        resize_only_if_bigger,
+        encode_quality=encode_quality,
+        encode_format=encode_format,
+        skip_reencode=skip_reencode,
+    )
     for image_path in image_paths:
         with open(image_path, "rb") as f:
             img = f.read()
@@ -46,3 +60,22 @@ def test_resizer(image_size, resize_mode, resize_only_if_bigger, skip_reencode):
         assert width_original == original_width
         assert height_original == original_height
         check_one_image_size(image_resized, image_original, image_size, resize_mode, resize_only_if_bigger)
+
+
+def test_resizer_filter():
+    current_folder = os.path.dirname(__file__)
+    test_folder = current_folder + "/" + "resize_test_image"
+    image_paths = glob.glob(test_folder + "/*")
+    resizer = Resizer(
+        image_size=256, resize_mode="no", resize_only_if_bigger=True, min_image_size=200, max_aspect_ratio=1.5
+    )
+    errors = []
+    for image_path in image_paths:
+        with open(image_path, "rb") as f:
+            img = f.read()
+            image_original_stream = io.BytesIO(img)
+        _, _, _, _, _, err = resizer(image_original_stream)
+        errors.append(err)
+    expected_errors = [(None, 2), ("image too small", 2), ("aspect ratio too large", 3)]
+    for expected_error, count in expected_errors:
+        assert count == errors.count(expected_error)

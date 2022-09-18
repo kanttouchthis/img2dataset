@@ -74,6 +74,7 @@ class Downloader:
         number_sample_per_shard,
         oom_shard_count,
         compute_md5,
+        encode_format,
         retries,
     ) -> None:
         self.sample_writer_class = sample_writer_class
@@ -87,6 +88,7 @@ class Downloader:
         self.number_sample_per_shard = number_sample_per_shard
         self.oom_shard_count = oom_shard_count
         self.compute_md5 = compute_md5
+        self.encode_format = encode_format
         self.retries = retries
 
     def __call__(
@@ -162,6 +164,7 @@ class Downloader:
             self.save_caption,
             self.oom_shard_count,
             schema,
+            self.encode_format,
         )
         oom_sample_per_shard = math.ceil(math.log10(self.number_sample_per_shard))
         with ThreadPool(self.thread_count) as thread_pool:

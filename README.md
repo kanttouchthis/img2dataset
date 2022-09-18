@@ -11,7 +11,9 @@ Also supports saving captions for url+caption datasets.
 
 ## Install
 
+```
 pip install img2dataset
+```
 
 ## Examples
 
@@ -24,6 +26,7 @@ Example of datasets to download with example commands are available in the [data
 * [laion-aesthetic](dataset_examples/laion-aesthetic.md) Laion aesthetic is a 120M laion5B subset with aesthetic > 7 pwatermark < 0.8 punsafe < 0.5
 * [laion-art](dataset_examples/laion-art.md) Laion aesthetic is a 8M laion5B subset with aesthetic > 8 pwatermark < 0.8 punsafe < 0.5
 * [laion-high-resolution](dataset_examples/laion-high-resolution.md) Laion high resolution is a 170M resolution >= 1024x1024 subset of laion5B
+* [laion-face](dataset_examples/laion-face.md) Laion face is the human face subset of LAION-400M for large-scale face pretraining. It has 50M image-text pairs.
 
 For all these examples, you may want to tweak the resizing to your preferences. The default is 256x256 with white borders.
 See options below.
@@ -104,7 +107,11 @@ This module exposes a single function `download` which takes the same arguments 
 * **resize_only_if_bigger** resize pictures only if bigger that the image_size (default *False*)
 * **upscale_interpolation** kind of upscale interpolation used for resizing (default *"lanczos"*)
 * **downscale_interpolation** kind of downscale interpolation used for resizing (default *"area"*)
-* **encode_quality** encode quality (default *95*)
+* **encode_quality** encode quality from 0 to 100, when using png it is the compression factor from 0 to 9 (default *95*)
+* **encode_format** encode format (default *jpg*)
+  * **jpg** jpeg format
+  * **png** png format
+  * **webp** webp format
 * **skip_reencode** whether to skip reencoding if no resizing is done (default *False*)
 * **output_format** decides how to save pictures (default *files*)
   * **files** saves as a set of subfolder containing pictures
@@ -135,6 +142,8 @@ This module exposes a single function `download` which takes the same arguments 
 * **subjob_size** the number of shards to download in each subjob supporting it, a subjob can be a pyspark job for example (default *1000*)
 * **retries** number of time a download should be retried (default *0*)
 * **disable_all_reencoding** if set to True, this will keep the image files in their original state with no resizing and no conversion, will not even check if the image is valid. Useful for benchmarks. To use only if you plan to post process the images by another program and you have plenty of storage available. (default *False*)
+* **min_image_size** minimum size of the image to download (default *0*)
+* **max_aspect_ratio** maximum aspect ratio of the image to download (default *inf*)
 * **incremental_mode** Can be "incremental" or "overwrite". For "incremental", img2dataset will download all the shards that were not downloaded, for "overwrite" img2dataset will delete recursively the output folder then start from zero (default *incremental*)
 * **max_shard_retry** Number of time to retry failed shards at the end (default *1*)
 
@@ -149,6 +158,38 @@ Img2dataset support several formats. There are trade off for which to choose:
 * webdataset: webdataset format saves samples in tar files, thanks to [webdataset](https://webdataset.github.io/webdataset/) library, this makes it possible to load the resulting dataset fast in both pytorch, tensorflow and jax. Choose this for most use cases. It works well for any filesystem
 * parquet: parquet is a columnar format that allows fast filtering. It's particularly easy to read it using pyarrow and pyspark. Choose this if the rest of your data ecosystem is based on pyspark. [petastorm](https://github.com/uber/petastorm) can be used to read the data but it's not as easy to use as webdataset
 * tfrecord: tfrecord is a protobuf based format. It's particularly easy to use from tensorflow and using [tf data](https://www.tensorflow.org/guide/data). Use this if you plan to use the dataset only in the tensorflow ecosystem. The tensorflow writer does not use fsspec and as a consequence supports only a limited amount of filesystem, including local, hdfs, s3 and gcs. It is also less efficient than the webdataset writer when writing to other filesystems than local, losing some 30% performance.
+
+## Encode format choice
+
+Images can be encoded in jpeg, png or webp, with diffent quality settings.
+
+Here are a few comparisons of space used for 1M images at 256 x 256:
+
+| format | quality | compression | size (GB)  |
+| ------ | ------- | ----------- | ---------- |
+| jpg    | 100     | N/A         | 54.2       |
+| jpg    | 95      | N/A         | 29.9       |
+| png    | N/A     | 0           | 187.9      |
+| png    | N/A     | 9           | 97.7       |
+| webp   | 100     | N/A         | 31.0       |
+| webp   | 95      | N/A         | 23.8       |
+
+Notes:
+
+* jpeg at quality 100 is NOT lossless
+* png format is lossless
+* webp at quality 100 is lossless
+* same quality scale between formats does not mean same image quality
+
+## Filtering the dataset
+
+Whenever feasible, you should pre-filter your dataset prior to downloading.
+
+If needed, you can use:
+* --min_image_size SIZE : to filter out images with one side smaller than SIZE
+* --max_aspect_ratio RATIO : to filter out images with an aspect ratio greater than RATIO
+
+When filtering data, it is recommended to pre-shuffle your dataset to limit the impact on shard size distribution.
 
 ## How to tweak the options
 
